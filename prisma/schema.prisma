@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Form {
+  id         String     @id @default(uuid())
+  sections   Section[]
+  createdAt  DateTime   @default(now())
+  submissions Submission[]
+}
+
+model Section {
+  id      String  @id @default(uuid())
+  name    String
+  formId  String
+  fields  Field[]
+  form    Form    @relation(fields: [formId], references: [id])
+}
+
+model Field {
+  id        String  @id @default(uuid())
+  label     String
+  type      String  // "text" or "number"
+  sectionId String
+  section   Section @relation(fields: [sectionId], references: [id])
+}
+
+model Submission {
+  id        String   @id @default(uuid())
+  formId    String
+  data      Json     // {fieldId: value}
+  createdAt DateTime @default(now())
+  form      Form     @relation(fields: [formId], references: [id])
+}
