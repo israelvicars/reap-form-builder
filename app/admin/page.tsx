@@ -5,7 +5,13 @@ import Link from 'next/link'
 export default async function Admin() {
   checkAdmin()
   const forms = await prisma.form.findMany({
-    select: { id: true, createdAt: true }
+    select: {
+      id: true,
+      createdAt: true,
+      _count: {
+        select: { submissions: true }
+      }
+    }
   })
 
   return (
@@ -41,6 +47,9 @@ export default async function Admin() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Public Link
                       </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Submissions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -61,6 +70,18 @@ export default async function Admin() {
                           >
                             /form/{form.id}
                           </a>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {form._count.submissions > 0 ? (
+                            <Link
+                              href={`/admin/submissions/${form.id}`}
+                              className="text-indigo-600 hover:text-indigo-900"
+                            >
+                              {form._count.submissions} submission{form._count.submissions !== 1 ? 's' : ''}
+                            </Link>
+                          ) : (
+                            <span className="text-gray-400">No submissions</span>
+                          )}
                         </td>
                       </tr>
                     ))}
