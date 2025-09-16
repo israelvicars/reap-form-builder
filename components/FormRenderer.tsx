@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { Form, FormValues } from '@/types/form'
+import { submitForm } from '@/app/actions/submissions'
 
 interface FormRendererProps {
   form: Form
@@ -18,18 +19,10 @@ export default function FormRenderer({ form }: FormRendererProps) {
   const submit = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/submissions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ formId: form.id, data: values }),
-      })
-      if (res.ok) {
-        setSubmitted(true)
-      } else {
-        alert('Submission failed')
-      }
-    } catch {
-      alert('Submission failed')
+      await submitForm(form.id, values)
+      setSubmitted(true)
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Submission failed')
     } finally {
       setLoading(false)
     }

@@ -2,13 +2,13 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CreateSectionInput, FieldType } from '@/types/form'
+import { createForm } from '@/app/actions/forms'
 
 export default function Create() {
   const [sections, setSections] = useState<CreateSectionInput[]>([
     { name: '', fields: [] }
   ])
   const [prompt, setPrompt] = useState('')
-  const [link, setLink] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -82,31 +82,14 @@ export default function Create() {
   }
 
   const save = async () => {
-    if (sections.length > 2 || sections.some(s => s.fields.length > 3)) {
-      return alert('Limits exceeded: max 2 sections, 3 fields each')
-    }
-
-    if (sections.some(s => !s.name.trim() || s.fields.some(f => !f.label.trim()))) {
-      return alert('Please fill in all section names and field labels')
-    }
-
     setLoading(true)
     try {
-      const res = await fetch('/api/forms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sections }),
-      })
-      if (res.ok) {
-        const { id } = await res.json()
-        setLink(`/form/${id}`)
+      const result = await createForm(sections)
+      if (result.success) {
         router.push('/admin')
-      } else {
-        alert('Failed to save form')
       }
-    } catch {
-      alert('Failed to save form')
-    } finally {
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to save form')
       setLoading(false)
     }
   }
@@ -231,21 +214,6 @@ export default function Create() {
           </div>
         </div>
 
-        {link && (
-          <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
-            <p className="text-green-800">
-              Form created! Public link:{' '}
-              <a
-                href={link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium underline"
-              >
-                {link}
-              </a>
-            </p>
-          </div>
-        )}
       </div>
     </div>
   )
