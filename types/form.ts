@@ -3,7 +3,7 @@ export type FieldType = 'text' | 'number';
 export interface Field {
   id: string;
   label: string;
-  type: FieldType;
+  type: FieldType | string; // Allow both strict types and Prisma string
 }
 
 export interface Section {

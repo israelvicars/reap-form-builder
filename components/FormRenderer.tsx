@@ -3,17 +3,7 @@ import { useState } from 'react'
 import { Form, FormValues } from '@/types/form'
 
 interface FormRendererProps {
-  form: Form & {
-    sections: Array<{
-      id: string;
-      name: string;
-      fields: Array<{
-        id: string;
-        label: string;
-        type: string;
-      }>;
-    }>;
-  };
+  form: Form
 }
 
 export default function FormRenderer({ form }: FormRendererProps) {

@@ -3,7 +3,7 @@ import { checkAdmin } from '@/lib/auth'
 import Link from 'next/link'
 
 export default async function Admin() {
-  checkAdmin()
+  await checkAdmin()
   const forms = await prisma.form.findMany({
     select: { id: true, createdAt: true }
   })

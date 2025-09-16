@@ -1,9 +1,10 @@
 import { prisma } from '@/lib/prisma'
 import FormRenderer from '@/components/FormRenderer'
 
-export default async function FormPage({ params }: { params: { id: string } }) {
+export default async function FormPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const form = await prisma.form.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { sections: { include: { fields: true } } },
   })
 
