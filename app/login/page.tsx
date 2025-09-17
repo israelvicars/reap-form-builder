@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { login } from '@/app/actions/auth'
 
 export default function Login() {
   const [username, setUsername] = useState('')
@@ -9,15 +10,13 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const res = await fetch('/api/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    })
-    if (res.ok) {
-      router.push('/admin')
-    } else {
-      alert('Login failed')
+    try {
+      const result = await login(username, password)
+      if (result.success) {
+        router.push('/admin')
+      }
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Login failed')
     }
   }
 

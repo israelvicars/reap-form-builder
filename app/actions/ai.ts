@@ -1,19 +1,14 @@
+'use server'
+
 import OpenAI from 'openai'
-import { NextRequest, NextResponse } from 'next/server'
-import { AIGenerateRequest, AIGenerateResponse } from '@/types/form'
+import { checkAdmin } from '@/lib/auth'
+import { AIGenerateResponse } from '@/types/form'
 
-export async function POST(req: NextRequest) {
-  if (req.cookies.get('isAdmin')?.value !== 'true') {
-    return NextResponse.json({}, { status: 401 })
-  }
-
-  const { prompt }: AIGenerateRequest = await req.json()
+export async function generateFormWithAI(prompt: string): Promise<AIGenerateResponse> {
+  await checkAdmin()
 
   if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your-key') {
-    return NextResponse.json(
-      { error: 'OpenAI API key not configured' },
-      { status: 500 }
-    )
+    throw new Error('OpenAI API key not configured')
   }
 
   try {
@@ -44,12 +39,9 @@ export async function POST(req: NextRequest) {
       })
     })
 
-    return NextResponse.json(json as AIGenerateResponse)
+    return json as AIGenerateResponse
   } catch (error) {
     console.error('OpenAI API error:', error)
-    return NextResponse.json(
-      { sections: [] },
-      { status: 400 }
-    )
+    throw new Error('AI generation failed')
   }
 }
