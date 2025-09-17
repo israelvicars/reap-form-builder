@@ -62,7 +62,7 @@ export default function FormRenderer({ form }: FormRendererProps) {
             <h1 className="text-3xl font-bold text-gray-900 mb-8">Form</h1>
 
             <div className="space-y-8">
-              {form.sections.map((section) => (
+              {form.sections?.map((section) => (
                 <div key={section.id}>
                   <h2 className="text-xl font-semibold text-gray-900 mb-4">
                     {section.name}

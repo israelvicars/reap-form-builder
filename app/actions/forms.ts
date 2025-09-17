@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma'
 import { checkAdmin } from '@/lib/auth'
 import { CreateSectionInput } from '@/types/form'
+import { revalidatePath } from 'next/cache'
 
 export async function createForm(sections: CreateSectionInput[]) {
   await checkAdmin()
@@ -32,11 +33,6 @@ export async function createForm(sections: CreateSectionInput[]) {
     }
   }
 
+  revalidatePath('/admin')
   return { success: true, formId: form.id }
-}
-
-export async function deleteForm(id: string) {
-  await checkAdmin()
-
-  await prisma.form.delete({ where: { id } })
 }
