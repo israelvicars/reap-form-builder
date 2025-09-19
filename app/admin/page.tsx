@@ -1,13 +1,11 @@
-import { prisma } from '@/lib/prisma'
 import { checkAdmin } from '@/lib/auth'
 import Link from 'next/link'
 import FormsTable from '@/components/FormsTable'
+import { getFormsWithSubmissions } from '../actions/forms'
 
 export default async function Admin() {
   await checkAdmin()
-  const forms = await prisma.form.findMany({
-    select: { id: true, createdAt: true }
-  })
+  const forms = await getFormsWithSubmissions()
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">

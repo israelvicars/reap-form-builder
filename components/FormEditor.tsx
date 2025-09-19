@@ -1,17 +1,40 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { CreateSectionInput, FieldType } from '@/types/form'
-import { createForm } from '@/app/actions/forms'
+import { CreateSectionInput, FieldType, Form } from '@/types/form'
+import { createForm, updateForm } from '@/app/actions/forms'
 import { generateFormWithAI } from '@/app/actions/ai'
 
-export default function FormEditor() {
+interface FormEditorProps {
+  initialForm?: Form
+  isEditing?: boolean
+}
+
+export default function FormEditor({ initialForm, isEditing = false }: FormEditorProps) {
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
   const [sections, setSections] = useState<CreateSectionInput[]>([
     { name: '', fields: [] }
   ])
   const [prompt, setPrompt] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    if (initialForm && isEditing) {
+      setTitle(initialForm.title || '')
+      setDescription(initialForm.description || '')
+      if (initialForm.sections && initialForm.sections.length > 0) {
+        setSections(initialForm.sections.map(section => ({
+          name: section.name,
+          fields: section.fields.map(field => ({
+            label: field.label,
+            type: field.type as FieldType
+          }))
+        })))
+      }
+    }
+  }, [initialForm, isEditing])
 
   const addSection = () => {
     if (sections.length < 2) {
@@ -65,6 +88,8 @@ export default function FormEditor() {
     setLoading(true)
     try {
       const result = await generateFormWithAI(prompt)
+      setTitle(result.title)
+      setDescription(result.description)
       setSections(result.sections)
     } catch (error) {
       alert(error instanceof Error ? error.message : 'AI generation failed')
@@ -76,7 +101,12 @@ export default function FormEditor() {
   const save = async () => {
     setLoading(true)
     try {
-      const result = await createForm(sections)
+      let result
+      if (isEditing && initialForm) {
+        result = await updateForm(initialForm.id, title, description, sections)
+      } else {
+        result = await createForm(title, description, sections)
+      }
       if (result.success) {
         router.push('/admin')
       }
@@ -91,7 +121,7 @@ export default function FormEditor() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
-            Create New Form
+            {isEditing ? 'Edit Form' : 'Create New Form'}
           </h1>
         </div>
 
@@ -103,7 +133,7 @@ export default function FormEditor() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="e.g., 'A job application form' or 'Customer feedback survey'"
-              className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900 placeholder-gray-500"
+              className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900 placeholder-gray-500 px-4"
             />
             <button
               onClick={generateAI}
@@ -112,6 +142,38 @@ export default function FormEditor() {
             >
               {loading ? 'Generating...' : 'Generate with AI'}
             </button>
+          </div>
+        </div>
+
+        <div className="bg-white shadow rounded-lg p-6 mb-6">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Form Details</h2>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+                Title
+              </label>
+              <input
+                type="text"
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter form title"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900 placeholder-gray-500 px-4"
+              />
+            </div>
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                Description (optional)
+              </label>
+              <textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Enter form description"
+                rows={3}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900 placeholder-gray-500 px-4"
+              />
+            </div>
           </div>
         </div>
 
@@ -138,7 +200,7 @@ export default function FormEditor() {
                   value={sec.name}
                   onChange={(e) => updateSection(secIdx, e.target.value)}
                   placeholder="Section Name"
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900 placeholder-gray-500"
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900 placeholder-gray-500 px-4"
                 />
               </div>
 
@@ -150,7 +212,7 @@ export default function FormEditor() {
                       value={field.label}
                       onChange={(e) => updateField(secIdx, fieldIdx, 'label', e.target.value)}
                       placeholder="Field Label"
-                      className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900 placeholder-gray-500"
+                      className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900 placeholder-gray-500 px-4"
                     />
                     <select
                       value={field.type}
@@ -203,7 +265,7 @@ export default function FormEditor() {
               disabled={loading}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded"
             >
-              {loading ? 'Saving...' : 'Save Form'}
+              {loading ? 'Saving...' : (isEditing ? 'Update Form' : 'Save Form')}
             </button>
           </div>
         </div>

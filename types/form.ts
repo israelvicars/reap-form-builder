@@ -1,21 +1,23 @@
+import { Form as PrismaForm, Section as PrismaSection, Field as PrismaField } from '@prisma/client'
+
 export type FieldType = 'text' | 'number'
 
-export interface Field {
-  id: string
-  label: string
-  type: FieldType | string // Allow both strict types and Prisma string
-}
+export type Field = PrismaField
 
-export interface Section {
-  id: string
-  name: string
+export type Section = PrismaSection & {
   fields: Field[]
 }
 
-export interface Form {
-  id: string
+export type Form = PrismaForm & {
   sections?: Section[]
+}
+
+export interface FormWithSubmissions {
+  id: string
+  title: string
+  description: string
   createdAt: Date
+  submissionsCount: number
 }
 
 export interface FormValues {
@@ -39,5 +41,7 @@ export interface AIGenerateRequest {
 }
 
 export interface AIGenerateResponse {
+  title: string
+  description: string
   sections: CreateSectionInput[]
 }

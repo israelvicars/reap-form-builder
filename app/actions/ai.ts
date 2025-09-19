@@ -1,8 +1,10 @@
 'use server'
 
 import OpenAI from 'openai'
+import { zodResponseFormat } from 'openai/helpers/zod'
 import { checkAdmin } from '@/lib/auth'
 import { AIGenerateResponse } from '@/types/form'
+import { FormGenerationSchema } from '@/lib/schemas'
 
 export async function generateFormWithAI(prompt: string): Promise<AIGenerateResponse> {
   await checkAdmin()
@@ -13,33 +15,35 @@ export async function generateFormWithAI(prompt: string): Promise<AIGenerateResp
 
   try {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-    const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
-          content: 'Output JSON: {sections: [{name: string, fields: [{label: string, type: "text"|"number"}]}]}. Limit to 2 sections, 3 fields each. Always return valid JSON only.'
+          content: 'You are a helpful assistant that generates complete forms including title, description, sections and fields based on user requirements. Create logical, well-organized form structures with appropriate titles and descriptions.'
         },
-        { role: 'user', content: `Suggest form sections and fields for: ${prompt}` }
-      ],
-      response_format: { type: "json_object" }
-    })
-
-    const json = JSON.parse(response.choices[0].message.content || '{}')
-
-    // Ensure we respect limits
-    json.sections = json.sections?.slice(0, 2) || []
-    json.sections.forEach((s: { fields?: { type?: string }[] }) => {
-      s.fields = s.fields?.slice(0, 3) || []
-      // Ensure field types are valid
-      s.fields.forEach((f: { type?: string }) => {
-        if (f.type !== 'text' && f.type !== 'number') {
-          f.type = 'text'
+        {
+          role: 'user',
+          content: `Create a complete form (title, description, sections, and fields) for: ${prompt}. Limit to 2 sections with up to 3 fields each. Provide a clear, descriptive title and a brief description explaining the form's purpose.`
         }
-      })
+      ],
+      response_format: zodResponseFormat(FormGenerationSchema, 'form_generation')
     })
 
-    return json as AIGenerateResponse
+    const message = completion.choices[0]?.message
+    
+    if (message.refusal) {
+      console.error('OpenAI refused request:', message.refusal)
+      throw new Error('Request was refused by AI safety systems')
+    }
+
+    if (message.content) {
+      const parsed = FormGenerationSchema.parse(JSON.parse(message.content))
+      return parsed as AIGenerateResponse
+    }
+
+    throw new Error('No content received from OpenAI')
+    
   } catch (error) {
     console.error('OpenAI API error:', error)
     throw new Error('AI generation failed')

@@ -11,9 +11,11 @@ datasource db {
 }
 
 model Form {
-  id         String     @id @default(uuid())
-  sections   Section[]
-  createdAt  DateTime   @default(now())
+  id          String     @id @default(uuid())
+  title       String     @default("")
+  description String     @default("")
+  sections    Section[]
+  createdAt   DateTime   @default(now())
   submissions Submission[]
 }
 

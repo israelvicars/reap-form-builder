@@ -23,12 +23,8 @@ Login with `admin` / `password123`
 
 ## Tech Stack
 
-- **Frontend**: Next.js 15 with App Router, TypeScript, Tailwind CSS
-- **Backend**: Next.js API routes, Prisma ORM
-- **Database**: SQLite
-- **AI**: OpenAI GPT-3.5-turbo with JSON mode
-
-## Next Steps
-
-- Form editing after creation
-- Submission viewing interface
+- **Frontend**: Next.js 15 with App Router, TypeScript, Tailwind CSS 4
+- **Backend**: Next.js Server Actions, Prisma ORM
+- **Database**: SQLite with Prisma schema
+- **AI**: OpenAI GPT-4o-mini with Zod schema validation
+- **Validation**: Zod for API interfaces and type safety
